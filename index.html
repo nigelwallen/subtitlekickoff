@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>SUBTITLE HELPER</title>
+    <style>
+        textarea {
+            width: 100%;
+            height: 35vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <h3>TRANSCRIPT (Input)</h3>
+        <div>START TIME(h:m:s)
+            <input id="startHours" type="number" min="0" max="24" value="0" onchange="changeStartTime()" />
+            <input id="startMin" type="number" min="0" max="59" value="0" onchange="changeStartTime()" />
+            <input id="startSeconds" type="number" min="0" max="60" value="0" onchange="changeStartTime()" />
+        </div><br/>
+        <textarea id="input" onkeyup="TextAreaChange(this)"></textarea>
+    </div>
+    <div>
+        <h3>MPL2 SUBTITLE FORMAT (Output)</h3>
+        <textarea id="output" readonly></textarea>
+    </div>
+
+</body>
+<script>
+    var subsStart = 0;
+    var subIntervals = 30;
+    var outputArray = [];
+
+    function AppendTimeSelectors(select) {
+        document.getElementById('timeSelectors').appendChild(select);
+    }
+
+    function changeStartTime(e) {
+        let hours = parseInt(document.getElementById("startHours").value);
+        let minutes = parseInt(document.getElementById("startMin").value);
+        let seconds = parseInt(document.getElementById("startSeconds").value);
+        this.subsStart = ((hours * 60 * 60) + (minutes * 60) + seconds) * 10;
+        let inputArray = StringSplit(document.getElementById("input").value);
+        this.outputArray = AddTimeValuesToArray(inputArray, this.subsStart, this.subIntervals);
+        output = document.getElementById("output")
+        output.value = JoinArray(this.outputArray);
+    }
+
+    function changeInterval(e) {
+        this.subIntervals = parseInt(e.value);
+    }
+    function SetSelect() {
+        let select = document.createElement('select');
+        select.onchange = (e) => { this.changeInterval(e.target) };
+        let timeIntervals = ['0', '5', '10', '15', '20'];
+        timeIntervals.forEach((interval) => {
+            option = document.createElement('option');
+            option.value = option.textContent = interval;
+            select.appendChild(option);
+        });
+        return select;
+    }
+
+    StringSplit = (strValue) => {
+        return (strValue.split(/\r?\n/))
+    }
+
+    AddTimeValuesToSubtitleLine = (sub, startTime, endTime) => {
+        return `[${startTime}][${endTime}] ${sub}`;
+    }
+
+    AddTimeValuesToArray = (subArray, startTime, interval) => {
+        return subArray.map((line, index) => {
+            let position = parseInt(startTime) + interval * index + 1;
+            return index > 0 ? AddTimeValuesToSubtitleLine(line, position, position + interval - 1) :
+                AddTimeValuesToSubtitleLine(line, position - 1, position + interval - 1);
+        })
+    }
+
+    function JoinArray(array) {
+        var str = "";
+        array.forEach((line) => {
+            str = str + line + '\n';
+        });
+        return str;
+    }
+
+    TextAreaChange = (e) => {
+        let inputValue = e.value
+        //read input
+        //break into array
+        let inputArray = StringSplit(inputValue);
+        //add [][]to front of each item in arrayarray
+        this.outputArray = AddTimeValuesToArray(inputArray, this.subsStart, this.subIntervals);
+        output = document.getElementById("output")
+        output.value = JoinArray(this.outputArray);
+    }
+
+</script>
+
+</html>
